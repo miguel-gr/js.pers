@@ -8,7 +8,7 @@ Alpha Version
 The Objective of this project is to create a Simple Framework for javascript persistence.
 The initial focus is local persistence but may expand to syncronization with remote data.
 
-Intended Usage
+Current functionality
 -------
 
 ```js
@@ -21,6 +21,19 @@ ex.name = "One";
 ex.type = 7;
 exampleDao.save(ex);
 
+
+// Obtain object by id
+exampleDao.get(0);
+
+// Obtain all
+exampleDao.getAll();
+
+```
+
+Pending functionality
+-------
+
+```js
 // Agregation
 var exChild = {};
 exChild.name = "Example Child";
@@ -29,16 +42,15 @@ exampleDao.saveChild(ex, "ExampleChild", exChild);
 // or directly through a new Dao like (Note the Entity name: "ExampleChild")
 var exampleChildDao = new jsPersDao("ExampleChild");
 
-// Obtain object by id
-exampleDao.get(0);
-
 // Obtain object and all agregated items of Entity Type "ExampleChild";
 exampleDao.get(0).children("ExampleChild");
 
-// Obtain all
-exampleDao.getAll()
+// Obtain object and all agregated items";
+exampleDao.get(0).children();
 
 // Criteria
 exampleDao.getAll().where("type", ">", 2).and("name", "=", "one");
 
 ```
+
+
