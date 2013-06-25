@@ -28,28 +28,30 @@ exampleDao.get(0);
 // Obtain all
 exampleDao.getAll();
 
+// Agregation
+var exChild = {};
+exChild.name = "Example Child";
+exampleDao.saveChild(ex, "ExampleChild", exChild);
+
+// This will create other object that can be obtained as an element of an array of "ex"
+// or directly through a new Dao like (Note the Entity name: "ExampleChild")
+var exampleChildDao = new jsPersDao("ExampleChild");
+
+// Obtain object and all agregated items of Entity Type "ExampleChild";
+exampleDao.children("ExampleChild").get(0);
+
 ```
 
 Pending functionality
 -------
 
 ```js
-// Agregation
-var exChild = {};
-exChild.name = "Example Child";
-exampleDao.saveChild(ex, "ExampleChild", exChild);
-// This will create other object that can be obtained as an element of an array of "ex"
-// or directly through a new Dao like (Note the Entity name: "ExampleChild")
-var exampleChildDao = new jsPersDao("ExampleChild");
-
-// Obtain object and all agregated items of Entity Type "ExampleChild";
-exampleDao.get(0).children("ExampleChild");
 
 // Obtain object and all agregated items";
-exampleDao.get(0).children();
+exampleDao.children().get(0);
 
 // Criteria
-exampleDao.getAll().where("type", ">", 2).and("name", "=", "one");
+exampleDao.where("type", ">", 2).and("name", "=", "one").getAll();
 
 ```
 
