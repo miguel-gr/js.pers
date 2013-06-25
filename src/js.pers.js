@@ -4,10 +4,17 @@
  */
 
 Dao = Class.extend({
-  name:"",
-	ids:new Array(),
-	init: function(entityName) {
-        this.name = entityName;
+    // Type of this DAO
+	type:"",
+	// Ids of current entities for this DAO
+	ids:[],
+	// Children DAOs
+	childrenDAOs:{},
+	// Types of children that will be obtained in a query
+	childrenTypesForQuery:[],
+	
+	init: function(entityType) {
+        this.type = entityType;
         this.ids = this.loadIds();
 	},
 
@@ -18,14 +25,51 @@ Dao = Class.extend({
             id = this.getMaxId()+1;
             entity.id = id;
         }
-        var name = this.name+":"+id;
+        var name = this.type+":"+id;
         window.localStorage.setItem(name, JSON.stringify(entity));
         this.adId(id);
+    },
+    // Save a child
+    saveChild: function(parent, childType, child){
+        if(parent==null || childType==null || child==null){
+            console.error("All parameters are needed");
+        }
+        // Save child
+        var childDao = this.getChildDao(childType);
+        childDao.save(child);
+        // Update parent
+        if(typeof parent.childrenIds === "undefined"){
+            parent.childrenIds = {};
+        }
+        if(typeof parent.childrenIds[childType] === "undefined"){
+            parent.childrenIds[childType] = [];
+        }
+        for(var i=0; i<=parent.childrenIds[childType].length; i++){
+            if(child.id===parent.childrenIds[childType][i]) return; // Id already added
+        }
+        parent.childrenIds[childType].push(child.id); // Add new child Id
+        parent.childrenIds[childType].sort(function(a,b){return a - b});
+        this.save(parent);
     },
 
     // Get an entity by its id, null if not found
     get: function(id){
-        var obj = JSON.parse(window.localStorage.getItem(this.name+":"+id));
+        var obj = JSON.parse(window.localStorage.getItem(this.type+":"+id));
+        // Get children if requested
+        if(this.childrenTypesForQuery.length>0){
+            for(var i=0; i<this.childrenTypesForQuery.length; i++){
+                var currChildType = this.childrenTypesForQuery[i];
+                var childDao = this.getChildDao(currChildType);
+                var attrName=currChildType.substr(0,1).toLowerCase()+currChildType.substr(1);
+                obj[attrName]=[];
+                if(obj.childrenIds){
+                    for(var j=0; j<obj.childrenIds[currChildType].length; j++){
+                        obj[attrName].push(childDao.get(obj.childrenIds[currChildType][j]));
+                    }
+                }
+            }
+            this.childrenTypesForQuery = []; // Reset values
+        }
         return obj;
     },
 
@@ -37,11 +81,27 @@ Dao = Class.extend({
             if(obj!=null){
                 res.push(obj);
             } else {
-                console.info("Should not be null! - "+this.name+":"+i);
+                console.info("Should not be null! - "+this.type+":"+i);
             }
         }
         return res;
     },
+    
+    /**
+     * Define the children of this entity that will be obtained.
+     * @param childrenTypes can be a String or an Array of Strings
+     */
+    children: function(childrenTypes){
+        var tmpArray = childrenTypes;
+        if( typeof childrenTypes === 'string' ) {
+            tmpArray = [];
+            tmpArray.push(childrenTypes);
+        }
+        this.childrenTypesForQuery = this.childrenTypesForQuery.concat(tmpArray);
+        return this;
+    },
+    
+    // ----------------------
     
     // Get the id of an entity, returns false if not present
     getEntityId: function(entity){
@@ -52,7 +112,7 @@ Dao = Class.extend({
     
     // Get name of the Ids List
     getIdsListName: function(){
-        return this.name+":ids";
+        return this.type+":ids";
     },
     
     // load ids
@@ -81,6 +141,14 @@ Dao = Class.extend({
         this.ids.sort(function(a,b){return a - b});
         window.localStorage.setItem(this.getIdsListName(), JSON.stringify(this.ids));
         console.info(this.getAll());
+    },
+
+    // Get a child Dao, if does not exits, it is created
+    getChildDao: function(name){
+        if(typeof this.childrenDAOs[name] === "undefined"){
+            this.childrenDAOs[name] = new Dao(name);
+        }
+        return this.childrenDAOs[name];
     }
     
 });
