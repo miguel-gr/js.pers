@@ -55,4 +55,7 @@ exampleDao.where("type", ">", 2).and("name", "=", "one").getAll();
 
 ```
 
-
+Notes
+-------
+* All objects are added with an autoincremental identifier named *id*. Example: *ex.id*  
+* If any children are obtained they are added to the object as an array in an attribute named as it entity name with the first letter in lowercase. Example: *ex.exampleChild*.
