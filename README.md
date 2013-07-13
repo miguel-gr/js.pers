@@ -15,7 +15,7 @@ Current functionality
 // New DAO
 var exampleDao = new jsPersDao("Example");
 
-// Insert Object
+// Insert-Update Object
 var ex = {};
 ex.name = "One";
 ex.type = 7;
@@ -23,7 +23,7 @@ exampleDao.save(ex);
 
 
 // Obtain object by id
-exampleDao.get(0);
+exampleDao.get(1);
 
 // Obtain all
 exampleDao.getAll();
@@ -38,7 +38,13 @@ exampleDao.saveChild(ex, "ExampleChild", exChild);
 var exampleChildDao = new jsPersDao("ExampleChild");
 
 // Obtain object and all agregated items of Entity Type "ExampleChild";
-exampleDao.children("ExampleChild").get(0);
+exampleDao.children("ExampleChild").get(1);
+
+// Delete object without removing children
+exampleDao.delete(1);
+
+// Delete object and all agregated items of Entity Type "ExampleChild";
+exampleDao.children("ExampleChild").delete(1);
 
 ```
 
@@ -47,8 +53,8 @@ Pending functionality
 
 ```js
 
-// Obtain object and all agregated items";
-exampleDao.children().get(0);
+// Obtain object and all agregated items
+exampleDao.children().get(1);
 
 // Criteria
 exampleDao.where("type", ">", 2).and("name", "=", "one").getAll();
