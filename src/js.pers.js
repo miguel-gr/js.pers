@@ -18,7 +18,9 @@ Dao = Class.extend({
         this.ids = this.loadIds();
 	},
 
-    // Save or updates an entity
+    /**
+     * Save or updates an entity
+     */
     save: function(entity){
         var id = this.getEntityId(entity);
         if(!id){ // New Id
@@ -29,7 +31,10 @@ Dao = Class.extend({
         window.localStorage.setItem(name, JSON.stringify(entity));
         this.adId(id);
     },
-    // Save a child
+
+    /**
+     * Save a child
+     */
     saveChild: function(parent, childType, child){
         if(parent==null || childType==null || child==null){
             console.error("All parameters are needed");
@@ -52,7 +57,9 @@ Dao = Class.extend({
         this.save(parent);
     },
 
-    // Get an entity by its id, null if not found
+    /**
+     * Get an entity by its id, null if not found
+     */
     get: function(id){
         var obj = JSON.parse(window.localStorage.getItem(this.type+":"+id));
         // Get children if requested
@@ -73,7 +80,9 @@ Dao = Class.extend({
         return obj;
     },
 
-    // Get all entities
+    /**
+     * Get all entities
+     */
     getAll: function(){
         var res = [];
         for(var i=0; i<this.ids.length; i++){
@@ -88,7 +97,7 @@ Dao = Class.extend({
     },
     
     /**
-     * Define the children of this entity that will be obtained.
+     * Define the children of this entity that will be obtained or removed.
      * @param childrenTypes can be a String or an Array of Strings
      */
     children: function(childrenTypes){
@@ -100,8 +109,59 @@ Dao = Class.extend({
         this.childrenTypesForQuery = this.childrenTypesForQuery.concat(tmpArray);
         return this;
     },
+
+    /**
+     * Remove an entity. If there are children defined (using the function children()) they are removed too.
+     */
+    delete: function(id){
+        var obj = JSON.parse(window.localStorage.getItem(this.type+":"+id));
+        // Delete children if requested
+        if(this.childrenTypesForQuery.length>0 && obj.childrenIds){
+            for(var i=0; i<this.childrenTypesForQuery.length; i++){
+                var currChildType = this.childrenTypesForQuery[i];
+                var ids = JSON.parse(window.localStorage.getItem(currChildType+":ids"));
+                for(var j=0; j<obj.childrenIds[currChildType].length; j++){
+                    // Remove item
+                    var idOfChild = obj.childrenIds[currChildType][j];
+                    var name = currChildType+":"+idOfChild;
+                    window.localStorage.removeItem(name);
+                }
+                // Update Ids in child
+                var remindIds = this.getIdsDifference(ids, obj.childrenIds[currChildType]);
+                window.localStorage.setItem(currChildType+":ids", JSON.stringify(remindIds));
+                this.getChildDao(currChildType).loadIds();
+            }
+            this.childrenTypesForQuery = []; // Reset values
+        }
+        window.localStorage.removeItem(this.type+":"+id);
+        // Update Ids
+        this.ids = this.getIdsDifference(this.ids, id);
+        window.localStorage.setItem(this.getIdsListName(), JSON.stringify(this.ids));
+    },
     
     // ----------------------
+    
+    /**
+     * Load ids from storage to DAO's memory
+     */
+    loadIds: function(){
+        var ids = JSON.parse(window.localStorage.getItem(this.getIdsListName()));
+        if(ids!=null){
+            this.ids = ids;
+        }
+        return this.ids;
+    },
+
+    // Get difference of Ids (may need to consider backwards compatibility: http://bit.ly/MOUGKh)
+    getIdsDifference: function(original, toRemove){
+        var tmpArray = toRemove;
+        if( typeof tmpArray === 'number' ) {
+            tmpArray = [];
+            tmpArray.push(toRemove);
+        }
+        return original.filter(function(i) {return tmpArray.indexOf(i) < 0;});
+    },
+    
     
     // Get the id of an entity, returns false if not present
     getEntityId: function(entity){
@@ -113,15 +173,6 @@ Dao = Class.extend({
     // Get name of the Ids List
     getIdsListName: function(){
         return this.type+":ids";
-    },
-    
-    // load ids
-    loadIds: function(){
-        var ids = JSON.parse(window.localStorage.getItem(this.getIdsListName()));
-        if(ids!=null){
-            this.ids = ids;
-        }
-        return this.ids;
     },
     
     // get max id
@@ -140,7 +191,6 @@ Dao = Class.extend({
         this.ids.push(id); // Add new Id
         this.ids.sort(function(a,b){return a - b});
         window.localStorage.setItem(this.getIdsListName(), JSON.stringify(this.ids));
-        console.info(this.getAll());
     },
 
     // Get a child Dao, if does not exits, it is created
