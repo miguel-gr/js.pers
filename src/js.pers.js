@@ -28,6 +28,16 @@ Dao = Class.extend({
             entity.id = id;
         }
         var name = this.type+":"+id;
+        // Remove children (only children ids are needed)
+        if(typeof entity.childrenIds != "undefined"){
+            for (var childIdName in entity.childrenIds) {
+                var childName=childIdName.substr(0,1).toLowerCase()+childIdName.substr(1);
+                if(typeof entity[childName] != "undefined"){
+                    delete entity[childName];
+                }
+            }
+        }
+        // Store object
         window.localStorage.setItem(name, JSON.stringify(entity));
         this.adId(id);
     },
